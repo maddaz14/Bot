@@ -1,0 +1,48 @@
+import fetch from 'node-fetch';
+
+const API_URL = 'https://api.nekolabs.my.id/random/nsfwhub/69';
+
+let handler = async (m, { conn, isGroup }) => {
+    // ⚠️ Peringatan: Konten NSFW
+    // Asumsi: Bot Anda punya sistem untuk memblokir NSFW di chat pribadi atau grup non-NSFW.
+    
+    // Pengecekan premium akan dilakukan oleh kerangka kerja bot Anda
+    
+    try {
+        await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } });
+
+        // 1. Ambil data (Buffer) dari API
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+            // Tangani status HTTP non-200
+            let errorText = await response.text().catch(() => response.statusText);
+            throw new Error(`Gagal mengambil gambar. Status: ${response.status} (${errorText})`);
+        }
+
+        // 2. Dapatkan Buffer gambar dari respon
+        const imageBuffer = await response.buffer();
+        
+        // 3. Kirim Buffer gambar langsung
+        await conn.sendMessage(m.chat, {
+            image: imageBuffer,
+            caption: '🔞 Gambar NSFW siap! (via Nekolabs)'
+        }, {
+            quoted: m
+        });
+
+        await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+
+    } catch (e) {
+        console.error('Error in nsfwhub handler:', e);
+        await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
+        await conn.reply(m.chat, `💥 Terjadi kesalahan: ${e.message}`, m);
+    }
+}
+
+handler.help = ['nsfwhub'];
+handler.tags = ['nsfw']; 
+handler.command = /^(nsfwhub|nsfw69)$/i;
+handler.premium = true; // ⬅️ Perubahan yang diminta
+
+export default handler;
